@@ -1,102 +1,113 @@
-terraform {
-  required_providers {
-    upcloud = {
-      source  = "UpCloudLtd/upcloud"
-      version = ">= 2.12.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.12.1"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.22.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = ">= 2.4.0"
-    }
-  }
-}
+#
+# UpCloud Kubernetes Cluster with Cert-Manager + Traefik
+#
 
-provider "upcloud" {
-  username = var.upcloud_username
-  password = var.upcloud_password
-}
-
-provider "kubernetes" {
-  config_path = local_file.kubeconfig.filename
-}
-
-provider "helm" {
-  kubernetes {
-    config_path = local_file.kubeconfig.filename
-  }
-}
-
-# Create the network (as per example)
-resource "upcloud_network" "example" {
-  name = "${var.cluster_name}-net"
+# Create a network for the Kubernetes cluster
+resource "upcloud_network" "k8s_network" {
+  name = var.network_name
   zone = var.zone
-}
-
-# Create the UKS cluster
-resource "upcloud_kubernetes_cluster" "example" {
-  name    = var.cluster_name
-  zone    = var.zone
-  network = upcloud_network.example.id
-
-  node_group {
-    title = "worker-group"
-    count = var.node_count
-    plan  = var.node_plan
-
-    storage {
-      size = var.storage_size
-    }
+  ip_network {
+    address = var.network_cidr
+    dhcp    = true
+    family  = "IPv4"
   }
 }
 
-# Write kubeconfig to a local file
-resource "local_file" "kubeconfig" {
-  content  = upcloud_kubernetes_cluster.example.kubeconfig
-  filename = "${path.module}/kubeconfig.yaml"
+# Create the UpCloud Managed Kubernetes cluster
+resource "upcloud_kubernetes_cluster" "example_cluster" {
+  name                    = var.cluster_name
+  zone                    = upcloud_network.k8s_network.zone
+  network                 = upcloud_network.k8s_network.id
+  control_plane_ip_filter = var.control_plane_ip_filter
+
+  # Trial accounts can only use development plans
+  plan = "dev-md"
 }
 
-# Install cert-manager
+# Create a node group for the cluster
+resource "upcloud_kubernetes_node_group" "example_node_group" {
+  cluster    = upcloud_kubernetes_cluster.example_cluster.id
+  name       = var.node_group_name
+  node_count = var.node_count
+
+  plan = "2xCPU-4GB"
+}
+
+# Fetch cluster kubeconfig details
+data "upcloud_kubernetes_cluster" "example_cluster" {
+  id = upcloud_kubernetes_cluster.example_cluster.id
+}
+
+# Kubernetes provider for direct queries
+# provider "kubernetes" {
+#   alias                  = "upcloud"
+#   host                   = local.kubeconfig_data.clusters[0].cluster.server
+#   cluster_ca_certificate = local.kubeconfig_data.clusters[0].cluster["certificate-authority-data"]
+#   client_certificate     = local.kubeconfig_data.users[0].user["client-certificate-data"]
+#   client_key             = local.kubeconfig_data.users[0].user["client-key-data"]
+#   token                  = local.kubeconfig_data.users[0].user["token"]
+# }
+
+# provider "helm" {
+#   alias = "upcloud"
+#   kubernetes {
+#     host                   = local.kubeconfig_data.clusters[0].cluster.server
+#     cluster_ca_certificate = local.kubeconfig_data.clusters[0].cluster["certificate-authority-data"]
+#     client_certificate     = local.kubeconfig_data.users[0].user["client-certificate-data"]
+#     client_key             = local.kubeconfig_data.users[0].user["client-key-data"]
+#     token                  = local.kubeconfig_data.users[0].user["token"]
+#   }
+# }
+# provider "helm" {
+#   kubernetes = kubernetes.upcloud
+# }
+
+# Deploy Cert-Manager
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io"
   chart            = "cert-manager"
+  version          = var.cert_manager_helm_chart_version
   namespace        = "cert-manager"
   create_namespace = true
-
-  version = "v1.15.3"
 
   set {
     name  = "installCRDs"
     value = "true"
   }
+
+  depends_on = [upcloud_kubernetes_cluster.example_cluster]
 }
 
-# Install Traefik
+# Deploy Traefik
 resource "helm_release" "traefik" {
   name             = "traefik"
-  repository       = "https://traefik.github.io/charts"
+  repository       = "https://helm.traefik.io/traefik"
   chart            = "traefik"
+  version          = var.traefik_helm_chart_version
   namespace        = "traefik"
   create_namespace = true
 
-  version = "v27.0.2"
-
   values = [
-    file("${path.module}/traefik-values.yaml")
+    yamlencode({
+      service = {
+        enabled = true
+        type    = "LoadBalancer"
+      }
+    })
   ]
+
+  depends_on = [upcloud_kubernetes_cluster.example_cluster]
 }
 
-# Let’s Encrypt ClusterIssuers
-resource "kubernetes_manifest" "letsencrypt_clusterissuer" {
-  manifest = yamldecode(templatefile("${path.module}/cluster-issuer.yaml", {
-    letsencrypt_email = var.letsencrypt_email
-  }))
+# Query the Traefik service
+data "kubernetes_service" "traefik" {
+  # provider = kubernetes.upcloud
+
+  metadata {
+    name      = "traefik"
+    namespace = "traefik"
+  }
+
+  depends_on = [helm_release.traefik]
 }

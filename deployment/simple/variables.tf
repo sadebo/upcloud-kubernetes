@@ -9,3 +9,9 @@ variable "upcloud_password" {
   type        = string
   sensitive   = true
 }
+
+variable "is_trial" {
+  description = "Whether this is a trial account (forces use of development plans)"
+  type        = bool
+  default     = true
+}

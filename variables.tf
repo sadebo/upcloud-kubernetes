@@ -1,38 +1,80 @@
-variable "upcloud_username" {
-  type      = string
-  sensitive = true
-}
+#
+# This file defines the input variables for the UpCloud Kubernetes module.
+#
 
-variable "upcloud_password" {
-  type      = string
-  sensitive = true
-}
-
-variable "cluster_name" {
-  type    = string
-  default = "uks-cluster"
-}
-
+# General configuration variables
 variable "zone" {
-  type    = string
-  default = "de-fra1"
+  description = "The UpCloud zone where the resources will be created."
+  type        = string
+  default     = "de-fra1"
 }
 
-variable "node_count" {
-  type    = number
-  default = 3
+# Network variables
+variable "network_name" {
+  description = "The name for the network."
+  type        = string
+  default     = "k8s-cluster-network"
+}
+
+variable "network_cidr" {
+  description = "The IP network address in CIDR format."
+  type        = string
+  default     = "172.16.1.0/24"
+}
+
+# Cluster variables
+variable "cluster_name" {
+  description = "The name of the Kubernetes cluster."
+  type        = string
+  default     = "my-awesome-k8s-cluster"
+}
+
+variable "cluster_plan" {
+  description = "Cluster plan (used if not trial)"
+  type        = string
+  default     = "2xCPU-4GB"
 }
 
 variable "node_plan" {
-  type    = string
-  default = "2xCPU-4GB"
+  description = "Node group plan (used if not trial)"
+  type        = string
+  default     = "2xCPU-4GB"
 }
 
-variable "storage_size" {
-  type    = number
-  default = 50
+variable "control_plane_ip_filter" {
+  description = "IP addresses or IP ranges in CIDR format allowed to access the control plane."
+  type        = set(string)
+  default     = ["0.0.0.0/0"]
 }
 
-variable "letsencrypt_email" {
-  type = string
+# Node group variables
+variable "node_group_name" {
+  description = "The name of the node group."
+  type        = string
+  default     = "worker-nodes"
+}
+
+variable "node_count" {
+  description = "The number of nodes to provision in the node group."
+  type        = number
+  default     = 2
+}
+
+# Helm chart variables
+variable "traefik_helm_chart_version" {
+  description = "The version of the Traefik Helm chart to deploy."
+  type        = string
+  default     = "25.0.0" # Use a recent stable version
+}
+
+variable "cert_manager_helm_chart_version" {
+  description = "The version of the Cert-Manager Helm chart to deploy."
+  type        = string
+  default     = "1.15.0" # Use a recent stable version
+}
+
+variable "is_trial" {
+  description = "Whether this is a trial account (forces use of development plans)"
+  type        = bool
+  default     = true
 }

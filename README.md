@@ -10,15 +10,13 @@ This Terraform module provisions a **Managed Kubernetes Service (UKS) cluster** 
 
 ---
 
-## 📦 Module Structure
-
 upcloud-k8s/
-├── main.tf # Core module logic
-├── variables.tf # Input variables
-├── outputs.tf # Outputs
-├── traefik-values.yaml # Traefik Helm values
-├── cluster-issuer.yaml # Let’s Encrypt ClusterIssuers
-└── README.md # This file
+├── main.tf                # Core module logic
+├── variables.tf           # Input variables
+├── outputs.tf             # Outputs
+├── traefik-values.yaml    # Traefik Helm values
+├── cluster-issuer.yaml    # Let’s Encrypt ClusterIssuers
+└── README.md              # This file
 
 
 ---

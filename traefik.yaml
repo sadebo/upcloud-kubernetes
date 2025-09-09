@@ -1,0 +1,18 @@
+ports:
+  web:
+    redirectTo: websecure
+  websecure:
+    tls:
+      enabled: true
+
+service:
+  type: LoadBalancer
+
+ingressRoute:
+  dashboard:
+    enabled: true
+
+providers:
+  kubernetesIngress:
+    publishedService:
+      enabled: true

@@ -29,6 +29,7 @@ resource "upcloud_kubernetes_node_group" "example_node_group" {
   cluster    = upcloud_kubernetes_cluster.example_cluster.id
   name       = var.node_group_name
   node_count = var.node_count
+  anti_affinity = false
 
   plan = "2xCPU-4GB"
 }
@@ -37,30 +38,6 @@ resource "upcloud_kubernetes_node_group" "example_node_group" {
 data "upcloud_kubernetes_cluster" "example_cluster" {
   id = upcloud_kubernetes_cluster.example_cluster.id
 }
-
-# Kubernetes provider for direct queries
-# provider "kubernetes" {
-#   alias                  = "upcloud"
-#   host                   = local.kubeconfig_data.clusters[0].cluster.server
-#   cluster_ca_certificate = local.kubeconfig_data.clusters[0].cluster["certificate-authority-data"]
-#   client_certificate     = local.kubeconfig_data.users[0].user["client-certificate-data"]
-#   client_key             = local.kubeconfig_data.users[0].user["client-key-data"]
-#   token                  = local.kubeconfig_data.users[0].user["token"]
-# }
-
-# provider "helm" {
-#   alias = "upcloud"
-#   kubernetes {
-#     host                   = local.kubeconfig_data.clusters[0].cluster.server
-#     cluster_ca_certificate = local.kubeconfig_data.clusters[0].cluster["certificate-authority-data"]
-#     client_certificate     = local.kubeconfig_data.users[0].user["client-certificate-data"]
-#     client_key             = local.kubeconfig_data.users[0].user["client-key-data"]
-#     token                  = local.kubeconfig_data.users[0].user["token"]
-#   }
-# }
-# provider "helm" {
-#   kubernetes = kubernetes.upcloud
-# }
 
 # Deploy Cert-Manager
 resource "helm_release" "cert_manager" {
@@ -100,6 +77,9 @@ resource "helm_release" "traefik" {
   depends_on = [upcloud_kubernetes_cluster.example_cluster]
 }
 
+# data "upcloud_kubernetes_cluster" "example_cluster" {
+#   id = upcloud_kubernetes_cluster.example_cluster.id
+# }
 # Query the Traefik service
 data "kubernetes_service" "traefik" {
   # provider = kubernetes.upcloud

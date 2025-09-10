@@ -22,3 +22,7 @@
 #   description = "The public IP address of the Traefik LoadBalancer service."
 #   value = helm_release.traefik.status.load_balancer_ip
 # }
+
+output "traefik_loadbalancer_ip" {
+  value = try(data.kubernetes_service.traefik.status[0].load_balancer[0].ingress[0].ip, "")
+}

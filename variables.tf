@@ -78,3 +78,9 @@ variable "is_trial" {
   type        = bool
   default     = true
 }
+
+# variable "anti_affinity_enabled" {
+#   description = "Whether to enforce strict anti-affinity (true/false)"
+#   type        = bool
+#   default     = false
+# }

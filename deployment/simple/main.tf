@@ -13,16 +13,17 @@ provider "upcloud" {
 }
 
 module "upcloud_k8s" {
-  source = "../.." # path to module root
+  source = "../../infra" # path to module root
   zone              = "de-fra1"
-
+  repo_url = "https://github.com/sadebo/gitops-repo.git"
   node_count        = 3
   node_plan         = "DEV-2xCPU-8GB"
+  repo_branch           = "main"
   # storage_size      = 50
   
   cluster_name = "lab-k8s-cluster"
   cluster_plan = "lab-lg"
-  control_plane_ip_filter = ["71.244.133.48"] # Example: only allow access from a specific IP range
+  # control_plane_ip_filter = ["71.244.133.48"] # Example: only allow access from a specific IP range
 
   # Node group variables
   node_group_name = "compute-nodes"
@@ -92,7 +93,7 @@ provider "helm" {
 # }
 
 # # data "upcloud_kubernetes_cluster" "example_cluster" {
-# #   id = upcloud_kubernetes_cluster.example_cluster.id
+# #   id = upcloud_kubernetes_cluster.dev_cluster.id
 # # }
 # # Query the Traefik service
 # data "kubernetes_service" "traefik" {
@@ -131,5 +132,5 @@ EOF
 # --------------------------
 resource "kubernetes_manifest" "argocd_app_ingress" {
   manifest = yamldecode(file("${path.module}/argocd-apps/ingress-controller-app.yaml"))
-  depends_on = [ helm_release.argocd ]
+  depends_on = [helm_release.argocd]
 }

@@ -1,66 +1,48 @@
-# Makefile for managing UpCloud Kubernetes cluster with Terraform
+# Root Makefile for UpCloud K8s + ArgoCD GitOps
+# include config.mk
+# export
+TF_DIR=.
+INFRA_DIR=$(TF_DIR)/infra
+BOOTSTRAP_DIR=$(TF_DIR)/bootstrap
+KUBECONFIG_FILE=$(BOOTSTRAP_DIR)/kubeconfig.yaml
 
-# Default environment variables
-TF_DIR       ?= .
-TF_PLAN_FILE ?= plan.tfplan
-TRIAL        ?= true
+# --- INFRA STAGE ---
 
-# Colors for pretty output
-GREEN=\033[0;32m
-YELLOW=\033[1;33m
-NC=\033[0m
+infra-init:
+	cd $(INFRA_DIR) && terraform init
 
-# Helper: pass trial flag to terraform
-TF_VARS=-var "is_trial=$(TRIAL)"
+infra-plan:
+	cd $(INFRA_DIR) && terraform plan
 
-.PHONY: init validate plan apply destroy output kubeconfig traefik-ip clean deploy
+infra-apply:
+	cd $(INFRA_DIR) && terraform apply -auto-approve \
+	&& terraform -chdir=$(INFRA_DIR) output -raw kubeconfig > $(KUBECONFIG_FILE)
 
-## Initialize Terraform
-init:
-	@echo "$(YELLOW)==> Initializing Terraform...$(NC)"
-	cd $(TF_DIR) && terraform init
+infra-destroy:
+	cd $(INFRA_DIR) && terraform destroy -auto-approve
 
-## Validate Terraform configs
-validate:
-	@echo "$(YELLOW)==> Validating Terraform configs...$(NC)"
-	cd $(TF_DIR) && terraform validate
+# --- BOOTSTRAP STAGE ---
 
-## Create a Terraform plan
-plan:
-	@echo "$(YELLOW)==> Generating Terraform plan (trial=$(TRIAL))...$(NC)"
-	cd $(TF_DIR) && terraform plan $(TF_VARS) -out=$(TF_PLAN_FILE)
+bootstrap-init:
+	cd $(BOOTSTRAP_DIR) && terraform init
 
-## Apply the last Terraform plan
-apply:
-	@echo "$(YELLOW)==> Applying Terraform changes...$(NC)"
-	cd $(TF_DIR) && terraform apply $(TF_PLAN_FILE)
+bootstrap-plan:
+	cd $(BOOTSTRAP_DIR) && terraform plan \
+	-var kubeconfig="$$(cat $(KUBECONFIG_FILE))" \
+	-var repo_url="git@github.com:your-org/gitops-repo.git"
 
-## Destroy all resources
-destroy:
-	@echo "$(YELLOW)==> Destroying Terraform-managed resources (trial=$(TRIAL))...$(NC)"
-	cd $(TF_DIR) && terraform destroy -auto-approve $(TF_VARS)
+bootstrap-apply:
+	cd $(BOOTSTRAP_DIR) && terraform apply -auto-approve \
+	-var kubeconfig="$$(cat $(KUBECONFIG_FILE))" \
+	-var repo_url="git@github.com:your-org/gitops-repo.git"
 
-## Show all outputs
-output:
-	@echo "$(YELLOW)==> Terraform Outputs:$(NC)"
-	cd $(TF_DIR) && terraform output
+bootstrap-destroy:
+	cd $(BOOTSTRAP_DIR) && terraform destroy -auto-approve \
+	-var kubeconfig="$$(cat $(KUBECONFIG_FILE))" \
+	-var repo_url="git@github.com:your-org/gitops-repo.git"
 
-## Get kubeconfig for kubectl access
-kubeconfig:
-	@echo "$(YELLOW)==> Writing kubeconfig to ./kubeconfig.yaml$(NC)"
-	cd $(TF_DIR) && terraform output -raw kubeconfig > ./kubeconfig.yaml
-	@echo "$(GREEN)Run: export KUBECONFIG=$$(pwd)/kubeconfig.yaml$(NC)"
+# --- SHORTCUTS ---
 
-## Get Traefik LoadBalancer address
-traefik-ip:
-	@echo "$(YELLOW)==> Fetching Traefik LoadBalancer address...$(NC)"
-	cd $(TF_DIR) && terraform output traefik_load_balancer_address
-
-## Clean up plan files and kubeconfig
-clean:
-	@echo "$(YELLOW)==> Cleaning local files...$(NC)"
-	rm -f $(TF_PLAN_FILE) kubeconfig.yaml
-
-## Full deploy: init -> plan -> apply -> kubeconfig -> traefik-ip
-deploy: init plan apply kubeconfig traefik-ip
-	@echo "$(GREEN)==> Deployment complete!$(NC)"
+infra: infra-init infra-apply
+bootstrap: bootstrap-init bootstrap-apply
+destroy: bootstrap-destroy infra-destroy

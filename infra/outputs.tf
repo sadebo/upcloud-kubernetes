@@ -6,7 +6,7 @@
 # The unique identifier of the created Kubernetes cluster.
 output "cluster_id" {
   description = "The unique identifier of the created Kubernetes cluster."
-  value       = upcloud_kubernetes_cluster.example_cluster.id
+  value       = upcloud_kubernetes_cluster.dev_cluster.id
 }
 
 # The kubeconfig content for connecting to the cluster.
@@ -15,6 +15,14 @@ output "cluster_id" {
 # Also output kubeconfig if you want to save/use it.
 output "kubeconfig" {
   description = "The kubeconfig content for connecting to the cluster."
-  value       = data.upcloud_kubernetes_cluster.example_cluster.kubeconfig
+  value       = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
   sensitive   = true
 }
+# output "kubeconfig" {
+#   value     = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
+#   sensitive = true
+# }
+# output "argocd_server" {
+#   description = "ArgoCD server LoadBalancer endpoint"
+#   value       = helm_release.argocd.status
+# }

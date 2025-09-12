@@ -41,11 +41,11 @@ variable "node_plan" {
   default     = "2xCPU-4GB"
 }
 
-variable "control_plane_ip_filter" {
-  description = "IP addresses or IP ranges in CIDR format allowed to access the control plane."
-  type        = set(string)
-  default     = ["0.0.0.0/0"]
-}
+# variable "control_plane_ip_filter" {
+#   description = "IP addresses or IP ranges in CIDR format allowed to access the control plane."
+#   type        = set(string)
+#   default     = ["71.244.133.48"]
+# }
 
 # Node group variables
 variable "node_group_name" {
@@ -84,3 +84,24 @@ variable "is_trial" {
 #   type        = bool
 #   default     = false
 # }
+
+# GitOps repo info
+variable "repo_url" {
+  type = string
+}
+
+variable "repo_branch" {
+  type    = string
+  default = "main"
+}
+
+variable "repo_path" {
+  type    = string
+  default = "apps"
+}
+
+variable "kubeconfig" {
+  description = "Kubeconfig YAML from infra"
+  type        = string
+  default     = ""
+}

@@ -4,16 +4,16 @@ terraform {
   required_providers {
     upcloud = {
       source  = "UpCloudLtd/upcloud"
-      version = ">= 2.12.1"
+      version = "~> 2.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.29.0"
+      version = "~> 2.30.0"
     }
     helm = {
       source  = "hashicorp/helm"
       # version = ">= 2.12.1"
-      version = ">= 2.11.0"
+      version = "~> 2.13.0"
     }
     local = {
       source  = "hashicorp/local"
@@ -52,7 +52,7 @@ terraform {
 
 # 👇 This was missing
 # locals {
-#   kubeconfig_data = yamldecode(data.upcloud_kubernetes_cluster.example_cluster.kubeconfig)
+#   kubeconfig_data = yamldecode(data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig)
 # }
 
 
@@ -74,17 +74,17 @@ terraform {
 
 # Use the kubeconfig directly
 # provider "kubernetes" {
-#   config_raw = data.upcloud_kubernetes_cluster.example_cluster.kubeconfig
+#   config_raw = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
 # }
 
 # provider "helm" {
 #   kubernetes {
-#     config_raw = data.upcloud_kubernetes_cluster.example_cluster.kubeconfig
+#     config_raw = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
 #   }
 # }
 
 # resource "local_file" "kubeconfig" {
-#   content  = data.upcloud_kubernetes_cluster.example_cluster.kubeconfig
+#   content  = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
 #   filename = "${path.module}/kubeconfig.yaml"
 # }
 

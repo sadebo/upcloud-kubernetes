@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: flaskredis-cert
+  namespace: default
+spec:
+  secretName: flaskredis-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  commonName: flaskredis.parallelservicesllc.com
+  dnsNames:
+  - flaskredis.parallelservicesllc.com

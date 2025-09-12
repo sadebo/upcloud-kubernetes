@@ -6,14 +6,14 @@
 # # The unique identifier of the created Kubernetes cluster.
 # output "cluster_id" {
 #   description = "The unique identifier of the created Kubernetes cluster."
-#   value       = upcloud_kubernetes_cluster.example_cluster.id
+#   value       = upcloud_kubernetes_cluster.dev_cluster.id
 # }
 
 # # The kubeconfig content for connecting to the cluster.
 # # This value is a sensitive string and should be handled with care.
 # output "kubeconfig" {
 #   description = "The kubeconfig content for connecting to the cluster."
-#   value       = data.upcloud_kubernetes_cluster.example_cluster.kubeconfig
+#   value       = data.upcloud_kubernetes_cluster.dev_cluster.kubeconfig
 #   sensitive   = true
 # }
 
@@ -23,6 +23,6 @@
 #   value = helm_release.traefik.status.load_balancer_ip
 # }
 
-output "traefik_loadbalancer_ip" {
-  value = try(data.kubernetes_service.traefik.status[0].load_balancer[0].ingress[0].ip, "")
-}
+# output "traefik_loadbalancer_ip" {
+#   value = try(data.kubernetes_service.traefik.status[0].load_balancer[0].ingress[0].ip, "")
+# }
